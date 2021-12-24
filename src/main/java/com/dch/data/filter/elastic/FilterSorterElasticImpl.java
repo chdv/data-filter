@@ -1,9 +1,9 @@
 package com.dch.data.filter.elastic;
 
 import com.dch.data.filter.FilterFieldType;
+import com.dch.data.filter.FilterPredicate;
 import com.dch.data.filter.FilterSorterImpl;
 import com.dch.data.filter.SortComparator;
-import com.dch.data.filter.FilterPredicate;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;

@@ -1,9 +1,9 @@
 package com.dch.data.filter.elastic;
 
 import com.dch.data.filter.FilterFieldType;
-import com.dch.data.filter.SortComparator;
 import com.dch.data.filter.FilterPredicate;
 import com.dch.data.filter.FilterSorter;
+import com.dch.data.filter.SortComparator;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
