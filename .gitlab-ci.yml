@@ -1,0 +1,113 @@
+variables:
+  DOCKER_HOST: "tcp://localhost:2375"
+  DOCKER_DRIVER: "overlay2"
+  DOCKER_PULL_NEXUS: "pull-nexus.pmh.moex.com"
+  MAVEN_IMAGE:  "${DOCKER_PULL_NEXUS}/maven:3.6.0-jdk-11-slim"
+  MAVEN_OPTS: "-Dmaven.repo.local=/mnt/.m2/repository \
+    -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN \
+    -Dorg.slf4j.simpleLogger.showDateTime=true \
+    -Ddocker.push.registry=$DOCKER_REGISTRY \
+    -Ddocker.username=$DOCKER_LOGIN \
+    -Ddocker.password=$DOCKER_PASS \
+    -Dsonar.login=$SONARQUBE_TOKEN \
+    -Dsonar.host.url=$SONARQUBE_URL \
+    -Dpmh.container.image.base=${JAVA_BASE_IMAGE}"
+  MAVEN_CLI_OPTS: "--batch-mode \
+    --errors \
+    --fail-at-end \
+    --show-version \
+    --settings settings.xml"
+  PROJECT_DIR: "/builds/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}"
+  SEMANTIC_VERSION: "${dev_version}.${CI_PIPELINE_ID}"
+  helmchartname: pmh-event-monitor
+
+image: "${DOCKER_PULL_NEXUS}/docker:latest"
+
+include:
+  - project: "moex-pmh/ops"
+    file: '/ci/main.yaml'
+    ref: develop
+  - project: "moex-pmh/pmh-ops/cicd"
+    file: '/deploy-core.yaml'
+    ref: develop
+
+services:
+  - name: "${DOCKER_PULL_NEXUS}/docker:dind"
+    entrypoint:
+      - docker-entrypoint.sh
+    command:
+      - dockerd
+      - "-H"
+      - "tcp://127.0.0.1:2375"
+      - "-H"
+      - "unix:///var/run/docker.sock"
+      - "--debug"
+
+stages:
+  - test
+  - build
+  - publish
+  - deploy
+  - codeAnalysis
+
+testing:
+  stage: test
+  image: "${DOCKER_PULL_NEXUS}/maven:3.6.0-jdk-11-slim"
+  script:
+    - mvn $MAVEN_CLI_OPTS -P sonar clean verify
+    #- cat target/jacoco-ut/index.html
+  artifacts:
+    reports:
+      junit:
+        - target/surefire-reports/TEST-*.xml
+  only:
+    refs:
+      - branches
+  except:
+    - develop
+    - feature/ci
+    - feature/sonar
+
+build:
+  stage: build
+  image: "${MAVEN_IMAGE}"
+  script:
+    - mvn $MAVEN_CLI_OPTS -DskipTests=true -DnewVersion=${SEMANTIC_VERSION} -DoldVersion=* -DgroupId=com.moex.pmh -DartifactId=* versions:set
+    - mvn $MAVEN_CLI_OPTS -DskipTests=true -P docker deploy
+  only:
+    - master
+    - develop
+    - /^release.*$/
+    - feature/ci
+
+# Опубликовать версию из feature ветки 
+# Нужна для случая, если требуется задеплоить приложение до merge'а в develop. 
+publish branch artifacts:
+  stage: build
+  image: "${MAVEN_IMAGE}"
+  when: manual
+  script:
+    - mvn $MAVEN_CLI_OPTS -DskipTests=true -DnewVersion=${SEMANTIC_VERSION} -DoldVersion=* -DgroupId=com.moex.pmh -DartifactId=* versions:set
+    - mvn $MAVEN_CLI_OPTS -DskipTests=true -P docker deploy
+  only:
+    refs:
+      - branches
+
+git Tagging:
+  stage: publish
+  extends: .git_tagging
+  only:
+  - master
+  - develop
+  - /^release.*$/
+  - feature/ci
+
+sonar:
+  stage: codeAnalysis
+  image: "${MAVEN_IMAGE}"
+  script:
+    - mvn $MAVEN_CLI_OPTS -DskipTests=true -DnewVersion=${SEMANTIC_VERSION} -DoldVersion=* -DgroupId=com.moex.pmh -DartifactId=* versions:set
+    - mvn $MAVEN_CLI_OPTS -P sonar clean compile sonar:sonar
+  only:
+    - develop
+    - feature/sonar

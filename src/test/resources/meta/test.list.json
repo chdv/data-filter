@@ -1,0 +1,40 @@
+{
+  "entity": "testEntity",
+  "fields": {
+    "id": {
+      "key": true,
+      "type": "string",
+      "autoincrement ": false,
+      "isArray": false,
+      "required": true
+    },
+    "type": {
+      "key": false,
+      "type": "string",
+      "autoincrement ": false,
+      "isArray": false,
+      "required": false
+    },
+    "name": {
+      "key": false,
+      "type": "string",
+      "autoincrement ": false,
+      "isArray": false,
+      "required": false
+    },
+    "date": {
+      "key": false,
+      "type": "timestampLocal",
+      "autoincrement ": false,
+      "isArray": false,
+      "required": false
+    },
+    "check": {
+      "key": false,
+      "type": "boolean",
+      "autoincrement ": false,
+      "isArray": false,
+      "required": false
+    }
+  }
+}
