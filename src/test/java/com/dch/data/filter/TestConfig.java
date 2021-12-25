@@ -21,14 +21,10 @@ import java.util.Properties;
 @Configuration
 public class TestConfig {
 
-    @Autowired
-    private DataSource dataSource;
-
-    @Autowired
-    private Properties hibernateProperties;
-
     @Bean
-    public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
+    public LocalContainerEntityManagerFactoryBean entityManagerFactory(
+            DataSource dataSource,
+            Properties hibernateProperties) {
         LocalContainerEntityManagerFactoryBean factoryBean = new LocalContainerEntityManagerFactoryBean();
         factoryBean.setDataSource(dataSource);
         factoryBean.setPackagesToScan("com.dch.data.filter");
