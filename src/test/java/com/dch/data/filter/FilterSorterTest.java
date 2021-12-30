@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -71,6 +72,7 @@ public class FilterSorterTest {
 
     @Rollback
     @Test
+    @Transactional
     @DisplayName("Test DB Filter")
     public void testDbFilter() throws IOException {
 
